@@ -2,7 +2,6 @@
 Training utilities for the Predictive Maintenance project.
 """
 
-import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -48,10 +47,6 @@ def evaluate_model(y_true: pd.Series, y_pred, model_name: str = "model") -> dict
 
 
 def build_error_analysis(val_data: pd.DataFrame, y_pred) -> pd.DataFrame:
-    """
-    يبني جدول تحليل الأخطاء (predicted_RUL, error, absolute_error)
-    اللي كنا بنعمله يدويًا جوه النوتبوك.
-    """
     error_analysis = val_data[["unit_number", "time_cycles", "RUL"]].copy()
 
     error_analysis["predicted_RUL"] = y_pred
