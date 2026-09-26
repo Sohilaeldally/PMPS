@@ -1,2 +1,5 @@
 data/
 CMAPSSData/
+
+__pycache__/
+*.pyc
