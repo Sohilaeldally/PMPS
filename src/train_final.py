@@ -38,6 +38,6 @@ models_dir.mkdir(exist_ok=True)
 
 model_path = models_dir / "final_xgboost.json"
 
-final_model.save_model(model_path)
+final_model.get_booster().save_model(model_path)
 
 print(f"Model saved to: {model_path}")
