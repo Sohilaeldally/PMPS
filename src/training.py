@@ -1,10 +1,12 @@
 """
 Training utilities for the Predictive Maintenance project.
 """
-
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+
 
 def split_by_engine(df: pd.DataFrame,test_size: float = 0.2,random_state: int = 42) -> tuple[pd.DataFrame, pd.DataFrame]:
     engine_ids = df["unit_number"].unique()
@@ -20,6 +22,16 @@ def split_by_engine(df: pd.DataFrame,test_size: float = 0.2,random_state: int = 
     val_data = df[df["unit_number"].isin(val_engines)].copy()
 
     return train_data, val_data
+
+
+def prepare_train_val_data(train_data,val_data,feature_cols):
+    X_train = train_data[feature_cols]
+    y_train = train_data["RUL"]
+
+    X_val = val_data[feature_cols]
+    y_val = val_data["RUL"]
+
+    return X_train, y_train, X_val, y_val
 
 
 def evaluate_model(y_true: pd.Series, y_pred, model_name: str = "model") -> dict:
