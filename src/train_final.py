@@ -1,12 +1,10 @@
 from pathlib import Path
-import sys
 
 from xgboost import XGBRegressor
 
 from preprocessing import clean_train_pipeline, get_feature_columns
 
 
-sys.path.append("../src")
 
 
 train = clean_train_pipeline(
