@@ -3,7 +3,7 @@ Data cleaning & preprocessing for NASA C-MAPSS (FD001).
 """
 
 import pandas as pd
-
+import numpy as np
 
 COLUMN_NAMES = (
     [
@@ -104,16 +104,72 @@ def add_rolling_features(
             df[f"{sensor}_roll_mean_{window}"] = (
                 df.groupby("unit_number")[sensor]
                 .transform(
-                    lambda x: x.rolling(window, min_periods=1).mean()
+                    lambda x: x.rolling(
+                        window,
+                        min_periods=1
+                    ).mean()
                 )
             )
 
             df[f"{sensor}_roll_std_{window}"] = (
                 df.groupby("unit_number")[sensor]
                 .transform(
-                    lambda x: x.rolling(window, min_periods=1).std()
+                    lambda x: x.rolling(
+                        window,
+                        min_periods=1
+                    ).std()
                 )
             )
+
+    rolling_std_cols = [
+        col
+        for col in df.columns
+        if "_roll_std_" in col
+    ]
+
+    df[rolling_std_cols] = df[rolling_std_cols].fillna(0)
+
+    return df
+
+
+def add_rolling_slope(
+    df: pd.DataFrame,
+    sensors: list,
+    window: int = 10
+) -> pd.DataFrame:
+
+    df = df.copy()
+
+    df = df.sort_values(
+        ["unit_number", "time_cycles"]
+    )
+
+    for sensor in sensors:
+
+        df[f"{sensor}_slope_{window}"] = (
+            df.groupby("unit_number")[sensor]
+            .transform(
+                lambda x: (
+                    x
+                    .rolling(window, min_periods=2)
+                    .apply(
+                        lambda y: np.polyfit(
+                            range(len(y)),
+                            y,
+                            1
+                        )[0]
+                    )
+                )
+            )
+        )
+
+    slope_cols = [
+        col
+        for col in df.columns
+        if "_slope_" in col
+    ]
+
+    df[slope_cols] = df[slope_cols].fillna(0)
 
     return df
 
