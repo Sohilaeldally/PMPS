@@ -86,7 +86,36 @@ def add_rul_test(df: pd.DataFrame,rul_path: str) -> pd.DataFrame:
 
     return df
 
+def add_rolling_features(
+    df: pd.DataFrame,
+    sensors: list,
+    windows: list = [5, 10]
+) -> pd.DataFrame:
 
+    df = df.copy()
+
+    df = df.sort_values(
+        ["unit_number", "time_cycles"]
+    )
+
+    for sensor in sensors:
+        for window in windows:
+
+            df[f"{sensor}_roll_mean_{window}"] = (
+                df.groupby("unit_number")[sensor]
+                .transform(
+                    lambda x: x.rolling(window, min_periods=1).mean()
+                )
+            )
+
+            df[f"{sensor}_roll_std_{window}"] = (
+                df.groupby("unit_number")[sensor]
+                .transform(
+                    lambda x: x.rolling(window, min_periods=1).std()
+                )
+            )
+
+    return df
 
 def cap_rul(df: pd.DataFrame, cap: int = 125) -> pd.DataFrame:
  
