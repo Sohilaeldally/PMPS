@@ -243,3 +243,24 @@ def clean_test_pipeline(raw_path: str,rul_path: str) -> pd.DataFrame:
     return df
 
 
+def clean_test_rolling_pipeline(
+    raw_path: str,
+    rul_path: str,
+    sensors: list,
+    windows: list = [5, 10]
+) -> pd.DataFrame:
+
+    df = load_raw_data(raw_path)
+
+    df = add_rul_test(
+        df,
+        rul_path
+    )
+
+    df = add_rolling_features(
+        df,
+        sensors=sensors,
+        windows=windows
+    )
+
+    return df
