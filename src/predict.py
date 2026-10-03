@@ -41,3 +41,50 @@ def predict_rul(df: pd.DataFrame) -> float:
     return float(prediction[0])
 
 
+def predict_all_engines(df: pd.DataFrame) -> pd.DataFrame:
+    predictions = []
+
+    for engine_id in df["unit_number"].unique():
+        engine_data = df[
+            df["unit_number"] == engine_id
+        ].copy()
+
+        predicted_rul = predict_rul(engine_data)
+
+        predictions.append({
+            "unit_number": engine_id,
+            "predicted_RUL": predicted_rul
+        })
+
+    return pd.DataFrame(predictions)
+
+
+if __name__ == "__main__":
+    test_data = pd.read_csv(
+        "../data/test_FD001.txt",
+        sep=r"\s+",
+        header=None
+    )
+
+    test_data.columns = COLUMN_NAMES
+
+    predictions = predict_all_engines(test_data)
+
+    rul_test = pd.read_csv(
+        "../data/RUL_FD001.txt",
+        header=None
+    )
+
+    predictions["true_RUL"] = rul_test[0].values
+
+    predictions["error"] = (
+        predictions["predicted_RUL"]
+        - predictions["true_RUL"]
+    )
+
+    predictions["absolute_error"] = (
+        predictions["error"].abs()
+    )
+
+    print("Mean Absolute Error:",predictions["absolute_error"].mean()
+)
