@@ -66,3 +66,22 @@ def build_error_analysis(val_data: pd.DataFrame, y_pred) -> pd.DataFrame:
     error_analysis["absolute_error"] = error_analysis["error"].abs()
 
     return error_analysis
+
+
+
+def cmapss_score(y_true, y_pred) -> float:
+    """
+    C-MAPSS asymmetric scoring function.
+
+    Lower score is better.
+    Positive error (overestimation of RUL) is penalized more.
+    """
+    error = np.asarray(y_pred) - np.asarray(y_true)
+
+    score = np.where(
+        error < 0,
+        np.exp(-error / 13) - 1,
+        np.exp(error / 10) - 1
+    )
+
+    return score.sum()
