@@ -1,14 +1,16 @@
 services:
-
   postgres:
     image: postgres:16-alpine
     container_name: predmaint_postgres
+
     environment:
       POSTGRES_DB: predictive_maintenance_db
       POSTGRES_USER: predmaint
-      POSTGRES_PASSWORD: predmaint_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
     ports:
       - "5433:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
