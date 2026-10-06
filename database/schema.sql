@@ -1,0 +1,40 @@
+CREATE TABLE sensor_readings (
+    id BIGSERIAL PRIMARY KEY,
+    engine_id INTEGER NOT NULL,
+    cycle INTEGER NOT NULL,
+
+    op_setting_1 DOUBLE PRECISION,
+    op_setting_2 DOUBLE PRECISION,
+    op_setting_3 DOUBLE PRECISION,
+
+    sensor_1 DOUBLE PRECISION,
+    sensor_2 DOUBLE PRECISION,
+    sensor_3 DOUBLE PRECISION,
+    sensor_4 DOUBLE PRECISION,
+    sensor_5 DOUBLE PRECISION,
+    sensor_6 DOUBLE PRECISION,
+    sensor_7 DOUBLE PRECISION,
+    sensor_8 DOUBLE PRECISION,
+    sensor_9 DOUBLE PRECISION,
+    sensor_10 DOUBLE PRECISION,
+    sensor_11 DOUBLE PRECISION,
+    sensor_12 DOUBLE PRECISION,
+    sensor_13 DOUBLE PRECISION,
+    sensor_14 DOUBLE PRECISION,
+    sensor_15 DOUBLE PRECISION,
+    sensor_16 DOUBLE PRECISION,
+    sensor_17 DOUBLE PRECISION,
+    sensor_18 DOUBLE PRECISION,
+    sensor_19 DOUBLE PRECISION,
+    sensor_20 DOUBLE PRECISION,
+    sensor_21 DOUBLE PRECISION,
+
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE predictions (
+    id BIGSERIAL PRIMARY KEY,
+    engine_id INTEGER NOT NULL,
+    predicted_rul DOUBLE PRECISION NOT NULL,
+    prediction_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
