@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 from xgboost import Booster, DMatrix
 
-from preprocessing import add_rolling_features,COLUMN_NAMES
+from preprocessing import add_rolling_features
 from config import ROLLING_SENSORS, ROLLING_WINDOWS,MODEL_FEATURES
 
 
@@ -59,32 +59,3 @@ def predict_all_engines(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(predictions)
 
 
-if __name__ == "__main__":
-    test_data = pd.read_csv(
-        "../data/test_FD001.txt",
-        sep=r"\s+",
-        header=None
-    )
-
-    test_data.columns = COLUMN_NAMES
-
-    predictions = predict_all_engines(test_data)
-
-    rul_test = pd.read_csv(
-        "../data/RUL_FD001.txt",
-        header=None
-    )
-
-    predictions["true_RUL"] = rul_test[0].values
-
-    predictions["error"] = (
-        predictions["predicted_RUL"]
-        - predictions["true_RUL"]
-    )
-
-    predictions["absolute_error"] = (
-        predictions["error"].abs()
-    )
-
-    print("Mean Absolute Error:",predictions["absolute_error"].mean()
-)
