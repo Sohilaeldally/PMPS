@@ -7,10 +7,10 @@ import pandas as pd
 import psycopg2
 
 from preprocessing import COLUMN_NAMES
-from config import DB_CONFIG
+from config import DB_CONFIG, DATA_DIR
 
 
-DATA_PATH = "../data/test_FD001.txt"
+DATA_PATH = DATA_DIR / "test_FD001.txt"
 
 
 def load_data():
@@ -81,9 +81,4 @@ def insert_data(df):
     print(f"Inserted {len(rows)} rows into sensor_readings.")
 
 
-if __name__ == "__main__":
-    data = load_data()
-
-    print("Data shape:", data.shape)
-
-    insert_data(data)
+i

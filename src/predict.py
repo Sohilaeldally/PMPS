@@ -1,13 +1,10 @@
-from pathlib import Path
-
 import pandas as pd
 from xgboost import Booster, DMatrix
 
 from preprocessing import add_rolling_features
-from config import ROLLING_SENSORS, ROLLING_WINDOWS,MODEL_FEATURES
+from config import ROLLING_SENSORS, ROLLING_WINDOWS, MODEL_FEATURES, MODELS_DIR
 
-
-MODEL_PATH = Path("../models/final_xgboost_v3.json")
+MODEL_PATH = MODELS_DIR / "final_xgboost_v3.json"
 
 
 def load_model():
@@ -16,7 +13,7 @@ def load_model():
     return model
 
 
-def predict_rul(df: pd.DataFrame) -> float:
+def predict_rul(df: pd.DataFrame, model) -> float:
     df = df.copy()
 
     df = df.sort_values(
@@ -29,9 +26,6 @@ def predict_rul(df: pd.DataFrame) -> float:
         windows=ROLLING_WINDOWS
     )
 
-    model = load_model()
-
-
     latest_row = df.tail(1)
 
     prediction = model.predict(
@@ -42,6 +36,8 @@ def predict_rul(df: pd.DataFrame) -> float:
 
 
 def predict_all_engines(df: pd.DataFrame) -> pd.DataFrame:
+    model = load_model()
+
     predictions = []
 
     for engine_id in df["unit_number"].unique():
@@ -49,7 +45,7 @@ def predict_all_engines(df: pd.DataFrame) -> pd.DataFrame:
             df["unit_number"] == engine_id
         ].copy()
 
-        predicted_rul = predict_rul(engine_data)
+        predicted_rul = predict_rul(engine_data, model)
 
         predictions.append({
             "unit_number": engine_id,
@@ -57,5 +53,3 @@ def predict_all_engines(df: pd.DataFrame) -> pd.DataFrame:
         })
 
     return pd.DataFrame(predictions)
-
-
