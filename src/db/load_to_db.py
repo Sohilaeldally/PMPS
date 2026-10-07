@@ -1,12 +1,13 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 import psycopg2
 
 from preprocessing import COLUMN_NAMES
-
 from config import DB_CONFIG
-
-
-
 
 
 DATA_PATH = "../data/test_FD001.txt"
@@ -62,7 +63,7 @@ def insert_data(df):
             %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s, %s
-)
+        )
     """
 
     rows = [
