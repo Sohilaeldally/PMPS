@@ -1,3 +1,5 @@
+from os import environ
+
 ROLLING_SENSORS = [
     "sensor_11",
     "sensor_4",
@@ -44,3 +46,11 @@ MODEL_FEATURES = [
     "sensor_7_roll_mean_10",
     "sensor_7_roll_std_10",
 ]
+
+DB_CONFIG = {
+    "host": "localhost",
+    "port": 5433,
+    "dbname": "predictive_maintenance_db",
+    "user": "predmaint",
+    "password": environ.get("DB_PASSWORD", "predmaint_password"),
+}
