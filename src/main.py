@@ -1,5 +1,10 @@
 from fastapi import FastAPI, HTTPException
-from db.queries import get_latest_predictions, get_engine_history
+
+from db.queries import (
+    get_latest_predictions,
+    get_engine_history,
+    get_prediction_history,
+)
 from predict import predict_engine_from_db
 
 app = FastAPI(
@@ -46,3 +51,18 @@ def create_prediction(engine_id: int):
         "engine_id": engine_id,
         "predicted_rul": predicted_rul,
     }
+
+
+@app.get("/predictions/history/{engine_id}")
+def prediction_history(engine_id: int):
+    rows = get_prediction_history(engine_id)
+
+    return [
+        {
+            "id": row[0],
+            "engine_id": row[1],
+            "predicted_rul": row[2],
+            "prediction_time": row[3],
+        }
+        for row in rows
+    ]

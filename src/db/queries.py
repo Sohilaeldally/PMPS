@@ -92,3 +92,23 @@ def get_latest_predictions():
 
     finally:
         conn.close()
+
+def get_prediction_history(engine_id: int):
+    conn = psycopg2.connect(**DB_CONFIG)
+
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, engine_id, predicted_rul, prediction_time
+                FROM predictions
+                WHERE engine_id = %s
+                ORDER BY prediction_time ASC, id ASC
+                """,
+                (engine_id,)
+            )
+
+            return cursor.fetchall()
+
+    finally:
+        conn.close()
