@@ -47,3 +47,48 @@ def save_prediction(engine_id: int, predicted_rul: float) -> None:
 
     finally:
         conn.close()    
+
+
+def get_latest_prediction(engine_id: int):
+    conn = psycopg2.connect(**DB_CONFIG)
+
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, engine_id, predicted_rul, prediction_time
+                FROM predictions
+                WHERE engine_id = %s
+                ORDER BY prediction_time DESC, id DESC
+                LIMIT 1
+                """,
+                (engine_id,)
+            )
+
+            return cursor.fetchone()
+
+    finally:
+        conn.close()
+
+
+def get_latest_predictions():
+    conn = psycopg2.connect(**DB_CONFIG)
+
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT DISTINCT ON (engine_id)
+                    id,
+                    engine_id,
+                    predicted_rul,
+                    prediction_time
+                FROM predictions
+                ORDER BY engine_id, prediction_time DESC, id DESC
+                """
+            )
+
+            return cursor.fetchall()
+
+    finally:
+        conn.close()
