@@ -28,3 +28,22 @@ def get_engine_history(engine_id: int) -> pd.DataFrame:
     conn.close()
 
     return df
+
+
+def save_prediction(engine_id: int, predicted_rul: float) -> None:
+    conn = psycopg2.connect(**DB_CONFIG)
+
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO predictions (engine_id, predicted_rul)
+                VALUES (%s, %s)
+                """,
+                (engine_id, predicted_rul)
+            )
+
+        conn.commit()
+
+    finally:
+        conn.close()    

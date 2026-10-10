@@ -4,6 +4,8 @@ from xgboost import Booster, DMatrix
 from preprocessing import add_rolling_features
 from config import ROLLING_SENSORS, ROLLING_WINDOWS, MODEL_FEATURES, MODELS_DIR
 
+from db.queries import get_engine_history,save_prediction
+
 MODEL_PATH = MODELS_DIR / "final_xgboost_v3.json"
 
 
@@ -53,3 +55,20 @@ def predict_all_engines(df: pd.DataFrame) -> pd.DataFrame:
         })
 
     return pd.DataFrame(predictions)
+
+def predict_engine_from_db(engine_id: int) -> float:
+    engine_data = get_engine_history(engine_id)
+
+    # Convert database column names to the names expected by the model
+    engine_data = engine_data.rename(columns={
+        "engine_id": "unit_number",
+        "cycle": "time_cycles"
+    })
+
+    model = load_model()
+
+    predicted_rul = predict_rul(engine_data, model)
+
+    save_prediction(engine_id, predicted_rul)
+
+    return predicted_rul
