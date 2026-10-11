@@ -5,7 +5,10 @@ from db.queries import (
     get_engine_history,
     get_prediction_history,
 )
+
 from predict import predict_engine_from_db
+from alerts import get_maintenance_status
+
 
 app = FastAPI(
     title="PredMaint API",
@@ -35,23 +38,6 @@ def latest_predictions():
         for row in rows
     ]
 
-@app.post("/predictions/{engine_id}")
-def create_prediction(engine_id: int):
-    history = get_engine_history(engine_id)
-
-    if history.empty:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No sensor data found for engine {engine_id}",
-        )
-
-    predicted_rul = predict_engine_from_db(engine_id)
-
-    return {
-        "engine_id": engine_id,
-        "predicted_rul": predicted_rul,
-    }
-
 
 @app.get("/predictions/history/{engine_id}")
 def prediction_history(engine_id: int):
@@ -66,3 +52,23 @@ def prediction_history(engine_id: int):
         }
         for row in rows
     ]
+
+
+@app.post("/predictions/{engine_id}")
+def create_prediction(engine_id: int):
+    history = get_engine_history(engine_id)
+
+    if history.empty:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No sensor data found for engine {engine_id}",
+        )
+
+    predicted_rul = predict_engine_from_db(engine_id)
+    status = get_maintenance_status(predicted_rul)
+
+    return {
+        "engine_id": engine_id,
+        "predicted_rul": predicted_rul,
+        "maintenance_status": status,
+    }
