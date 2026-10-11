@@ -34,6 +34,7 @@ def latest_predictions():
             "engine_id": row[1],
             "predicted_rul": row[2],
             "prediction_time": row[3],
+            "maintenance_status": get_maintenance_status(float(row[2])),
         }
         for row in rows
     ]
