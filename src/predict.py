@@ -72,3 +72,49 @@ def predict_engine_from_db(engine_id: int) -> float:
     save_prediction(engine_id, predicted_rul)
 
     return predicted_rul
+
+
+
+def simulate_engine_history(df: pd.DataFrame, model=None) -> pd.DataFrame:
+    """
+    Simulate sequential RUL predictions for one engine.
+    Uses only readings available up to each cycle.
+    Does not save predictions to the database.
+    """
+    df = df.copy()
+
+    # Accept either database column names or model column names
+    df = df.rename(columns={
+        "engine_id": "unit_number",
+        "cycle": "time_cycles"
+    })
+
+    if df.empty:
+        raise ValueError("Engine history is empty.")
+
+    if df["unit_number"].nunique() != 1:
+        raise ValueError("Pass data for exactly one engine.")
+
+    df = df.sort_values("time_cycles").reset_index(drop=True)
+
+    if model is None:
+        model = load_model()
+
+    engine_id = int(df["unit_number"].iloc[0])
+    results = []
+
+    for cycle in df["time_cycles"].unique():
+        # Use only readings available up to this cycle
+        available_data = df[
+            df["time_cycles"] <= cycle
+        ].copy()
+
+        predicted_rul = predict_rul(available_data, model)
+
+        results.append({
+            "engine_id": engine_id,
+            "cycle": int(cycle),
+            "predicted_rul": predicted_rul
+        })
+
+    return pd.DataFrame(results)
