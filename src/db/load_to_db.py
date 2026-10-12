@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 import pandas as pd
 import psycopg2
 
-from preprocessing import COLUMN_NAMES
+from ml.preprocessing import COLUMN_NAMES
 from config import DB_CONFIG, DATA_DIR
 
 

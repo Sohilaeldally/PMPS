@@ -2,7 +2,7 @@ from pathlib import Path
 
 from xgboost import XGBRegressor
 
-from preprocessing import clean_train_pipeline, get_feature_columns
+from ml.preprocessing import clean_train_pipeline, get_feature_columns
 
 
 
