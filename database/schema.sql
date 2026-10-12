@@ -38,3 +38,20 @@ CREATE TABLE predictions (
     predicted_rul DOUBLE PRECISION NOT NULL,
     prediction_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+CREATE TABLE simulation_predictions (
+    id BIGSERIAL PRIMARY KEY,
+    simulation_id UUID NOT NULL,
+    engine_id INTEGER NOT NULL,
+    cycle INTEGER NOT NULL,
+    predicted_rul DOUBLE PRECISION NOT NULL,
+    actual_rul DOUBLE PRECISION,
+    data_source VARCHAR(50) NOT NULL DEFAULT 'NASA_CMAPSS_FD001',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (simulation_id, engine_id, cycle)
+);
+
+CREATE INDEX idx_simulation_predictions_run
+ON simulation_predictions (simulation_id, engine_id, cycle);
