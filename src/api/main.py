@@ -4,10 +4,11 @@ from db.queries import (
     get_latest_predictions,
     get_engine_history,
     get_prediction_history,
+    get_simulation_predictions,
 )
 
-from predict import predict_engine_from_db
-from alerts import get_maintenance_status
+from ml.predict import predict_engine_from_db
+from api.alerts import get_maintenance_status
 
 
 app = FastAPI(
@@ -73,3 +74,22 @@ def create_prediction(engine_id: int):
         "predicted_rul": predicted_rul,
         "maintenance_status": status,
     }
+
+
+@app.get("/simulations/{simulation_id}")
+def simulation_predictions(simulation_id: str):
+    try:
+        rows = get_simulation_predictions(simulation_id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not retrieve simulation results. Check the simulation ID.",
+        ) from exc
+
+    if not rows:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No simulation results found for simulation ID {simulation_id}",
+        )
+
+    return rows
