@@ -20,10 +20,11 @@ mode (HPC degradation), 21 sensor channels per cycle.
 
 ```
 PMPS/
-├── data/                   # raw C-MAPSS files (not tracked in git)
-├── models/                 # trained model artifacts (not tracked in git)
+├── Dockerfile               # API container build instructions
+├── docker-compose.yml        # PostgreSQL + API services
+├── requirements.txt
 ├── database/
-│   └── schema.sql          # PostgreSQL table definitions
+│   └── schema.sql
 ├── notebooks/
 │   ├── 01_train_eda.ipynb
 │   ├── 02_test_analysis.ipynb
@@ -31,13 +32,13 @@ PMPS/
 │   ├── 04_xgboost_tuning.ipynb
 │   └── 05_test_evaluation.ipynb
 ├── src/
-│   ├── config.py           # paths, DB config, model feature list
-│   ├── ml/                 # preprocessing, training, prediction
-│   ├── db/                 # PostgreSQL read/write queries
-│   ├── api/                # FastAPI app and alert logic
-│   └── test/               # simulation / smoke-test scripts
-├── docker-compose.yml       # PostgreSQL service
-└── requirements.txt
+│   ├── config.py
+│   ├── ml/
+│   ├── db/
+│   ├── api/
+│   └── test/
+├── data/                     # raw C-MAPSS files (not tracked in git)
+└── models/                   # trained model artifacts (not tracked in git)
 ```
 
 

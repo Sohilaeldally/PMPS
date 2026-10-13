@@ -54,10 +54,11 @@ MODEL_FEATURES = [
     "sensor_7_roll_std_10",
 ]
 
+
 DB_CONFIG = {
-    "host": "localhost",
-    "port": 5433,
-    "dbname": "predictive_maintenance_db",
-    "user": "predmaint",
+    "host": environ.get("DB_HOST", "localhost"),
+    "port": int(environ.get("DB_PORT", 5433)),
+    "dbname": environ.get("POSTGRES_DB", "predictive_maintenance_db"),
+    "user": environ.get("POSTGRES_USER", "predmaint"),
     "password": environ.get("POSTGRES_PASSWORD", "predmaint_password"),
-    }
+}
