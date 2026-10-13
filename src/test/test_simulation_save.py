@@ -1,11 +1,20 @@
 
+import sys
 import uuid
+
+sys.path.append("../src")
 
 from db.queries import get_engine_history, save_simulation_predictions
 from ml.predict import load_model, simulate_engine_history
 
+import pandas as pd
+from config import DATA_DIR
+
 engine_id = 1
 simulation_id = uuid.uuid4()
+
+rul_values = pd.read_csv(DATA_DIR / "RUL_FD001.txt", header=None)
+actual_rul = float(rul_values.iloc[engine_id - 1, 0])
 
 print("Loading engine history...", flush=True)
 engine_data = get_engine_history(engine_id)
@@ -24,6 +33,7 @@ save_simulation_predictions(
     simulation_id=simulation_id,
     engine_id=engine_id,
     simulation_df=simulation_df,
+    actual_rul=actual_rul,
 )
 
 print("Saved successfully!", flush=True)
