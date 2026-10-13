@@ -59,5 +59,5 @@ DB_CONFIG = {
     "port": 5433,
     "dbname": "predictive_maintenance_db",
     "user": "predmaint",
-    "password": environ.get("DB_PASSWORD", "predmaint_password"),
-}
+    "password": environ.get("POSTGRES_PASSWORD", "predmaint_password"),
+    }
