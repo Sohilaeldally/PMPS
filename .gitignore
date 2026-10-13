@@ -1,10 +1,8 @@
-data/
 CMAPSSData/
 
 __pycache__/
 *.pyc
 
-models/
 
 .env
 .venv/
