@@ -1,10 +1,13 @@
+import uuid
+
 from db.queries import (
     get_latest_predictions,
     get_engine_history,
     get_prediction_history as db_get_prediction_history,
     get_simulation_predictions,
+    save_simulation_predictions,
 )
-from ml.predict import predict_engine_from_db
+from ml.predict import predict_engine_from_db, load_model, simulate_engine_history
 from api.services.alerts import get_maintenance_status
 
 
@@ -55,3 +58,27 @@ def create_prediction(engine_id: int):
 
 def get_simulation_results(simulation_id: str):
     return get_simulation_predictions(simulation_id)
+
+
+def run_simulation(engine_id: int):
+    engine_data = get_engine_history(engine_id)
+
+    if engine_data.empty:
+        return None
+
+    simulation_id = uuid.uuid4()
+    model = load_model()
+
+    simulation_df = simulate_engine_history(engine_data, model=model)
+
+    save_simulation_predictions(
+        simulation_id=simulation_id,
+        engine_id=engine_id,
+        simulation_df=simulation_df,
+    )
+
+    return {
+        "simulation_id": str(simulation_id),
+        "engine_id": engine_id,
+        "cycles_simulated": len(simulation_df),
+    }

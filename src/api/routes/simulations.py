@@ -22,3 +22,16 @@ def simulation_predictions(simulation_id: str):
         )
 
     return rows
+
+
+@router.post("/{engine_id}")
+def create_simulation(engine_id: int):
+    result = prediction_service.run_simulation(engine_id)
+
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No sensor data found for engine {engine_id}",
+        )
+
+    return result
