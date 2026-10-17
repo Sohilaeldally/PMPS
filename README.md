@@ -83,13 +83,13 @@ The API classifies every predicted RUL (in cycles):
 
 | Predicted RUL | Status |
 |---|---|
-| ≤ 15 | `CRITICAL` |
+| ≤ 10 | `CRITICAL` |
 | ≤ 30 | `WARNING` |
 | > 30 | `NORMAL` |
 
 The logic lives in `src/api/services/alerts.py`.
 
-> These thresholds (15 and 30 cycles) are illustrative defaults, not derived
+> These thresholds (10 and 30 cycles) are illustrative defaults, not derived
 > from the data or from a maintenance-cost analysis. In a real deployment they
 > would be tuned to the lead time needed to schedule maintenance.
 
@@ -255,11 +255,14 @@ HTTP Request  → POST /predictions/run-all   (refresh predictions)
         ↓
 HTTP Request  → GET  /predictions/latest
         ↓
-IF status = CRITICAL ──yes──→ Send Email
-        │ no
+Filter        → keep only CRITICAL and WARNING engines
         ↓
-IF status = WARNING  ──yes──→ Send Email
+Loop (1 item at a time) → Send Email → Wait 12 s → next engine
 ```
+
+One email is sent per engine that needs attention, 12 seconds apart, so
+email providers with rate limits (e.g. Mailtrap's free sandbox) accept them
+all.
 
 The email contains the engine ID, status, predicted RUL and prediction time.
 
