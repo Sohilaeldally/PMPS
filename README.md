@@ -57,7 +57,11 @@ The API classifies every predicted RUL (in cycles):
 | ≤ 30 | `WARNING` |
 | > 30 | `NORMAL` |
 
-These thresholds (10 and 30 cycles) are illustrative defaults, not derived from the data or from a maintenance-cost analysis. In a real deployment they would be tuned to the lead time needed to schedule maintenance, and can be changed in `src/api/services/alerts.py`.
+The logic lives in `src/api/services/alerts.py`.
+
+> These thresholds (10 and 30 cycles) are illustrative defaults, not derived
+> from the data or from a maintenance-cost analysis. In a real deployment they
+> would be tuned to the lead time needed to schedule maintenance.
 
 ## Project structure
 
@@ -69,6 +73,8 @@ PMPS/
 ├── .env.example                # Copy to .env and set POSTGRES_PASSWORD
 ├── database/
 │   └── schema.sql              # sensor_readings, predictions, simulation_predictions
+├── docs/
+│   └── images/email_alert.png  # Demo screenshot of the alert email
 ├── data/                       # C-MAPSS FD001 files
 ├── models/                     # Trained XGBoost models (v1, v2, v3)
 ├── notebooks/
@@ -220,6 +226,14 @@ IF status = WARNING  ──yes──→ Send Email
 ```
 
 The email contains the engine ID, status, predicted RUL and prediction time.
+
+### Demo
+
+![Maintenance alert email](docs/images/email_alert.png)
+
+*Alert email rendered in a Mailtrap sandbox inbox. For this demo the WARNING
+threshold was temporarily raised so that engine 3 (predicted RUL 53) would
+trigger an alert.*
 
 ### Set it up
 
