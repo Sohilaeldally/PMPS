@@ -81,3 +81,5 @@ def insert_data(df):
     print(f"Inserted {len(rows)} rows into sensor_readings.")
 
 
+if __name__ == "__main__":
+    insert_data(load_data())

@@ -58,9 +58,24 @@ reproducible with a script in `src/ml/`:
 | v2 | + rolling-window features | `models/final_xgboost_v2.json` |
 | v3 | + rolling features + RUL cap 125 (**used by the API**) | `models/final_xgboost_v3.json` |
 
-Evaluation is done on the untouched test set (all 100 engines, last cycle of
-each) using RMSE, MAE, R² and the C-MAPSS asymmetric score — see
-`notebooks/05_test_evaluation.ipynb`.
+### Results
+
+Evaluated on the untouched FD001 test set (all 100 engines, last cycle of
+each) — see `notebooks/05_test_evaluation.ipynb`:
+
+| Model | RMSE | MAE | R² | C-MAPSS score (lower is better) |
+|---|---|---|---|---|
+| v1 | 25.29 | 18.32 | 0.63 | 5228 |
+| v2 | 25.62 | 19.03 | 0.62 | 4741 |
+| **v3** | **18.12** | **13.48** | **0.81** | **619** |
+
+The RUL cap (v3) gave the biggest improvement: early in an engine's life the
+sensors show no degradation, so predicting an exact large RUL is not possible
+and capping the target at 125 removes that noise.
+
+**Limitations:** trained and evaluated on FD001 only (one operating condition,
+one fault mode); predicts from the latest cycle's features and rolling
+windows, with no uncertainty estimate.
 
 ## Maintenance status rules
 
@@ -100,6 +115,9 @@ PMPS/
 │   └── 05_test_evaluation.ipynb    # Final test-set evaluation
 ├── n8n/
 │   └── pmps_workflow.json      # Exported n8n alert workflow (import into n8n)
+├── tests/
+│   └── test_alerts.py          # Unit tests for the status thresholds
+├── LICENSE
 └── src/
     ├── config.py               # Paths, model features, DB settings
     ├── ml/                     # Preprocessing, training helpers, prediction
@@ -151,19 +169,18 @@ docker-compose up -d --build
 
 Interactive API docs: http://localhost:8000/docs
 
-### 4. Create the tables
+### 4. Tables
 
-Run from the project root.
+The tables are created automatically from `database/schema.sql` the first
+time the database container starts (empty volume). If you started the
+database before this was added, create them once manually:
 
-Linux / macOS / Git Bash:
 ```bash
 docker exec -i predmaint_postgres psql -U predmaint -d predictive_maintenance_db < database/schema.sql
 ```
 
-Windows PowerShell:
-```powershell
-Get-Content database/schema.sql | docker exec -i predmaint_postgres psql -U predmaint -d predictive_maintenance_db
-```
+On Windows PowerShell use:
+`Get-Content database/schema.sql | docker exec -i predmaint_postgres psql -U predmaint -d predictive_maintenance_db`
 
 ### 5. Load the sensor data
 
@@ -172,7 +189,7 @@ Run it from the `src/` folder (the database is reachable on `localhost:5433`):
 
 ```bash
 cd src
-python -c "from db.load_to_db import load_data, insert_data; insert_data(load_data())"
+python db/load_to_db.py
 ```
 
 Run this **once** — running it again inserts the rows a second time.
@@ -205,6 +222,7 @@ This needs PostgreSQL running (`docker-compose up -d postgres`).
 | GET | `/` | Health check |
 | GET | `/predictions/latest` | Latest prediction per engine, with `maintenance_status` |
 | GET | `/predictions/history/{engine_id}` | Full prediction history for one engine |
+| POST | `/predictions/run-all` | Run and store a new prediction for **every** engine; returns counts per status |
 | POST | `/predictions/{engine_id}` | Run and store a new RUL prediction for one engine |
 | POST | `/simulations/{engine_id}` | Replay an engine's life cycle by cycle and store every prediction; returns a `simulation_id` |
 | GET | `/simulations/{simulation_id}` | Cycle-by-cycle results of a simulation run |
@@ -212,6 +230,7 @@ This needs PostgreSQL running (`docker-compose up -d postgres`).
 Example:
 
 ```bash
+curl -X POST http://localhost:8000/predictions/run-all
 curl -X POST http://localhost:8000/predictions/1
 curl http://localhost:8000/predictions/latest
 curl -X POST http://localhost:8000/simulations/1
@@ -232,7 +251,9 @@ An n8n workflow turns predictions into email alerts:
 ```
 Schedule Trigger (daily, 9:00)
         ↓
-HTTP Request  → GET /predictions/latest
+HTTP Request  → POST /predictions/run-all   (refresh predictions)
+        ↓
+HTTP Request  → GET  /predictions/latest
         ↓
 IF status = CRITICAL ──yes──→ Send Email
         │ no
@@ -252,16 +273,27 @@ The email contains the engine ID, status, predicted RUL and prediction time.
 4. Create an **SMTP credential** and attach it to the *Send Email* node. For
    testing, [Mailtrap](https://mailtrap.io) Email Sandbox works well
    (host `sandbox.smtp.mailtrap.io`, port `2525`, no real emails are sent).
-5. Make sure there are predictions to read (`POST /predictions/{engine_id}`),
-   then run the workflow.
+5. Run the workflow.
 
 Credentials are not stored in the exported workflow file; you must create
 them in your own n8n instance.
+
+## Tests
+
+```bash
+pytest tests
+```
+
+Unit tests cover the CRITICAL / WARNING / NORMAL thresholds.
 
 ## Tech stack
 
 Python · pandas · scikit-learn · XGBoost · FastAPI · PostgreSQL · psycopg2 ·
 Docker / Docker Compose · n8n
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 
 ## Author
 

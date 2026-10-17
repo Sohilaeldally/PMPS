@@ -8,7 +8,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        0,
+        96,
         -16
       ],
       "id": "102bea8a-ece6-4e64-8102-e6867ba573de",
@@ -124,6 +124,23 @@
       ],
       "id": "b02c9529-b571-46bd-94c2-348b1e5cba2f",
       "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/predictions/run-all",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -112,
+        -16
+      ],
+      "id": "3f6c2d1e-8a4b-4c57-9e21-5b7d0a9c4e11",
+      "name": "Run all predictions"
     }
   ],
   "connections": {
@@ -168,6 +185,17 @@
       ]
     },
     "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Run all predictions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run all predictions": {
       "main": [
         [
           {

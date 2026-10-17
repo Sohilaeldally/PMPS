@@ -31,6 +31,25 @@ def get_engine_history(engine_id: int) -> pd.DataFrame:
     return df
 
 
+def get_engine_ids() -> list[int]:
+    conn = psycopg2.connect(**DB_CONFIG)
+
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT DISTINCT engine_id
+                FROM sensor_readings
+                ORDER BY engine_id
+                """
+            )
+
+            return [row[0] for row in cursor.fetchall()]
+
+    finally:
+        conn.close()
+
+
 def save_prediction(engine_id: int, predicted_rul: float) -> None:
     conn = psycopg2.connect(**DB_CONFIG)
 

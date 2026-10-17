@@ -15,6 +15,11 @@ def prediction_history(engine_id: int):
     return prediction_service.get_prediction_history(engine_id)
 
 
+@router.post("/run-all")
+def run_all_predictions():
+    return prediction_service.run_all_predictions()
+
+
 @router.post("/{engine_id}")
 def create_prediction(engine_id: int):
     result = prediction_service.create_prediction(engine_id)

@@ -1,6 +1,7 @@
 import uuid
 
 from db.queries import (
+    get_engine_ids,
     get_latest_predictions,
     get_engine_history,
     get_prediction_history as db_get_prediction_history,
@@ -53,6 +54,26 @@ def create_prediction(engine_id: int):
         "engine_id": engine_id,
         "predicted_rul": predicted_rul,
         "maintenance_status": status,
+    }
+
+
+def run_all_predictions():
+    results = []
+
+    for engine_id in get_engine_ids():
+        predicted_rul = predict_engine_from_db(engine_id)
+
+        results.append({
+            "engine_id": engine_id,
+            "predicted_rul": predicted_rul,
+            "maintenance_status": get_maintenance_status(predicted_rul),
+        })
+
+    return {
+        "engines_predicted": len(results),
+        "critical": sum(r["maintenance_status"] == "CRITICAL" for r in results),
+        "warning": sum(r["maintenance_status"] == "WARNING" for r in results),
+        "normal": sum(r["maintenance_status"] == "NORMAL" for r in results),
     }
 
 
