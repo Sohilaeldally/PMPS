@@ -1,46 +1,101 @@
 # PMPS — Predictive Maintenance Platform System
 
-Predictive maintenance pipeline for turbofan jet engines, built on NASA's
-C-MAPSS (FD001) dataset. Predicts Remaining Useful Life (RUL) from sensor
-readings and serves predictions through a REST API with maintenance alerts.
+End-to-end predictive maintenance pipeline for turbofan jet engines, built on
+NASA's C-MAPSS (FD001) dataset. It predicts each engine's **Remaining Useful
+Life (RUL)** from sensor readings, stores predictions in PostgreSQL, serves
+them through a REST API, and sends **email alerts** automatically through n8n
+when an engine needs maintenance.
 
 ## Pipeline
 
+```
 Sensor Data → Cleaning / Feature Engineering → XGBoost Model → RUL Prediction
-→ PostgreSQL → FastAPI → Maintenance Alerts
+            → PostgreSQL → FastAPI → n8n Automation → Maintenance Alerts (email)
+```
 
+Everything runs in Docker (PostgreSQL + API); n8n runs alongside it as a
+separate container.
 
 ## Dataset
 
 [NASA C-MAPSS (FD001)](https://www.nasa.gov/intelligent-systems-division/discovery-and-systems-health/pcoe/pcoe-data-set-repository/) —
 100 training engines and 100 test engines, 1 operating condition, 1 fault
-mode (HPC degradation), 21 sensor channels per cycle.
+mode (HPC degradation), 21 sensor channels per cycle. The three FD001 files
+are included in `data/`.
+
+## Model
+
+XGBoost regressor trained on:
+
+- the selected raw sensor / operating-setting columns, and
+- rolling-window features (mean and std over 5 and 10 cycles) for sensors
+  4, 7, 11 and 12,
+
+with the training RUL **capped at 125 cycles** (piecewise-linear degradation,
+standard practice on this dataset).
+
+Three model versions are kept in `models/`, each built in a notebook and
+reproducible with a script in `src/ml/`:
+
+| Version | What changed | File |
+|---|---|---|
+| v1 | Baseline XGBoost | `models/final_xgboost.json` |
+| v2 | + rolling-window features | `models/final_xgboost_v2.json` |
+| v3 | + rolling features + RUL cap 125 (**used by the API**) | `models/final_xgboost_v3.json` |
+
+Evaluation is done on the untouched test set (all 100 engines, last cycle of
+each) using RMSE, MAE, R² and the C-MAPSS asymmetric score — see
+`notebooks/05_test_evaluation.ipynb`.
+
+## Maintenance status rules
+
+The API classifies every predicted RUL (in cycles):
+
+| Predicted RUL | Status |
+|---|---|
+| ≤ 10 | `CRITICAL` |
+| ≤ 30 | `WARNING` |
+| > 30 | `NORMAL` |
+
+The logic lives in `src/api/services/alerts.py`.
 
 ## Project structure
 
 ```
 PMPS/
-├── Dockerfile               # API container build instructions
-├── docker-compose.yml        # PostgreSQL + API services
+├── Dockerfile                  # Builds the API image
+├── docker-compose.yml          # PostgreSQL + API services
 ├── requirements.txt
+├── .env.example                # Copy to .env and set POSTGRES_PASSWORD
 ├── database/
-│   └── schema.sql
+│   └── schema.sql              # sensor_readings, predictions, simulation_predictions
+├── data/                       # C-MAPSS FD001 files
+├── models/                     # Trained XGBoost models (v1, v2, v3)
 ├── notebooks/
-│   ├── 01_train_eda.ipynb
-│   ├── 02_test_analysis.ipynb
-│   ├── 03_baseline_modeling.ipynb
-│   ├── 04_xgboost_tuning.ipynb
-│   └── 05_test_evaluation.ipynb
-├── src/
-│   ├── config.py
-│   ├── ml/
-│   ├── db/
-│   ├── api/
-│   └── test/
-├── data/                     # raw C-MAPSS files (not tracked in git)
-└── models/                   # trained model artifacts (not tracked in git)
+│   ├── 01_train_eda.ipynb          # Training data exploration
+│   ├── 02_test_analysis.ipynb      # Test data analysis
+│   ├── 03_baseline_modeling.ipynb  # Baseline models
+│   ├── 04_xgboost_tuning.ipynb     # Tuning, rolling features, RUL cap
+│   └── 05_test_evaluation.ipynb    # Final test-set evaluation
+├── n8n/
+│   └── pmps_workflow.json      # Exported n8n alert workflow (import into n8n)
+└── src/
+    ├── config.py               # Paths, model features, DB settings
+    ├── ml/                     # Preprocessing, training helpers, prediction
+    │   ├── preprocessing.py
+    │   ├── training.py
+    │   ├── predict.py
+    │   └── xgboost_v1.py / xgboost_v2.py / xgboost_v3.py
+    ├── db/                     # Everything that touches PostgreSQL
+    │   ├── load_to_db.py       # Loads sensor data into the database
+    │   └── queries.py          # Read/write queries
+    ├── api/
+    │   ├── main.py             # FastAPI app
+    │   ├── routes/             # HTTP layer (predictions, simulations)
+    │   └── services/           # Business logic (prediction_service, alerts)
+    └── test/
+        └── test_simulation_save.py
 ```
-
 
 ## Setup
 
@@ -54,56 +109,138 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Get the data
-
-Download the C-MAPSS FD001 files (`train_FD001.txt`, `test_FD001.txt`,
-`RUL_FD001.txt`) and place them in `data/`.
-
-### 3. Start the database
+### 2. Configure the environment
 
 ```bash
-cp .env.example .env    # fill in POSTGRES_PASSWORD
-docker-compose up -d
+cp .env.example .env             # Windows: copy .env.example .env
 ```
 
-Create the tables:
-```bash
-docker exec -it predmaint_postgres psql -U predmaint -d predictive_maintenance_db -f /path/to/database/schema.sql
-```
+Open `.env` and set `POSTGRES_PASSWORD` to a password of your choice.
 
-### 4. Train the model
-
-Run the notebooks in order (`01` → `05`), or run the training scripts in
-`src/ml/` directly, to produce a trained model in `models/`.
-
-### 5. Load sensor data into the database
+### 3. Start PostgreSQL and the API
 
 ```bash
-cd src/db
-python load_to_db.py
+docker-compose up -d --build
 ```
 
-### 6. Run the API
+| Service | Container | URL / port |
+|---|---|---|
+| PostgreSQL | `predmaint_postgres` | `localhost:5433` (host) / `postgres:5432` (inside Docker) |
+| FastAPI | `predmaint_api` | http://localhost:8000 |
+
+Interactive API docs: http://localhost:8000/docs
+
+### 4. Create the tables
+
+Run from the project root.
+
+Linux / macOS / Git Bash:
+```bash
+docker exec -i predmaint_postgres psql -U predmaint -d predictive_maintenance_db < database/schema.sql
+```
+
+Windows PowerShell:
+```powershell
+Get-Content database/schema.sql | docker exec -i predmaint_postgres psql -U predmaint -d predictive_maintenance_db
+```
+
+### 5. Load the sensor data
+
+The loader reads `data/test_FD001.txt` and inserts it into `sensor_readings`.
+Run it from the `src/` folder (the database is reachable on `localhost:5433`):
 
 ```bash
-cd src/api
-uvicorn main:app --reload
+cd src
+python -c "from db.load_to_db import load_data, insert_data; insert_data(load_data())"
 ```
 
-API docs available at `http://localhost:8000/docs`.
+Run this **once** — running it again inserts the rows a second time.
+
+### 6. (Optional) Retrain a model
+
+The trained models are already in `models/`. To retrain, either run the
+notebooks in order (`01` → `05`), or run a training script from `src/`:
+
+```bash
+cd src
+python -m ml.xgboost_v3
+```
+
+The API loads `models/final_xgboost_v3.json`.
+
+### Running the API without Docker
+
+```bash
+cd src
+uvicorn api.main:app --reload
+```
+
+This needs PostgreSQL running (`docker-compose up -d postgres`).
 
 ## API endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/` | Health check |
-| GET | `/predictions/latest` | Latest prediction per engine, with maintenance status |
+| GET | `/predictions/latest` | Latest prediction per engine, with `maintenance_status` |
 | GET | `/predictions/history/{engine_id}` | Full prediction history for one engine |
-| POST | `/predictions/{engine_id}` | Run a new prediction for one engine |
+| POST | `/predictions/{engine_id}` | Run and store a new RUL prediction for one engine |
+| POST | `/simulations/{engine_id}` | Replay an engine's life cycle by cycle and store every prediction; returns a `simulation_id` |
 | GET | `/simulations/{simulation_id}` | Cycle-by-cycle results of a simulation run |
 
-## Model
+Example:
 
-XGBoost regressor trained on rolling-window sensor features (mean/std over
-5 and 10 cycles), with RUL capped at 125 cycles (piecewise linear
-degradation assumption, standard practice on this dataset).
+```bash
+curl -X POST http://localhost:8000/predictions/1
+curl http://localhost:8000/predictions/latest
+curl -X POST http://localhost:8000/simulations/1
+```
+
+### Simulations
+
+A simulation walks through one engine's history cycle by cycle, predicting
+RUL using only the data available up to that cycle. Each run gets its own
+`simulation_id` (UUID), so the same engine can be simulated many times
+without overwriting earlier runs. Results are stored in
+`simulation_predictions` and can be compared against the true RUL.
+
+## n8n alert automation
+
+An n8n workflow turns predictions into email alerts:
+
+```
+Schedule Trigger (daily, 9:00)
+        ↓
+HTTP Request  → GET /predictions/latest
+        ↓
+IF status = CRITICAL ──yes──→ Send Email
+        │ no
+        ↓
+IF status = WARNING  ──yes──→ Send Email
+```
+
+The email contains the engine ID, status, predicted RUL and prediction time.
+
+### Set it up
+
+1. Run n8n (locally in Docker, UI at http://localhost:5678).
+2. In n8n: **Workflows → Import from file →** `n8n/pmps_workflow.json`.
+3. In the HTTP Request node, make sure the URL points to the API as seen
+   **from the n8n container**, e.g. `http://host.docker.internal:8000/predictions/latest`.
+4. Create an **SMTP credential** and attach it to the *Send Email* node. For
+   testing, [Mailtrap](https://mailtrap.io) Email Sandbox works well
+   (host `sandbox.smtp.mailtrap.io`, port `2525`, no real emails are sent).
+5. Make sure there are predictions to read (`POST /predictions/{engine_id}`),
+   then run the workflow.
+
+Credentials are not stored in the exported workflow file; you must create
+them in your own n8n instance.
+
+## Tech stack
+
+Python · pandas · scikit-learn · XGBoost · FastAPI · PostgreSQL · psycopg2 ·
+Docker / Docker Compose · n8n
+
+## Author
+
+Sohila Reda — [@Sohilaeldally](https://github.com/Sohilaeldally)
