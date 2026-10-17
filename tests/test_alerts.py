@@ -12,8 +12,8 @@ from api.services.alerts import get_maintenance_status
     "predicted_rul, expected",
     [
         (0, "CRITICAL"),
-        (10, "CRITICAL"),
-        (10.1, "WARNING"),
+        (15, "CRITICAL"),
+        (15.1, "WARNING"),
         (30, "WARNING"),
         (30.1, "NORMAL"),
         (125, "NORMAL"),
