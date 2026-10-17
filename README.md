@@ -6,6 +6,21 @@ Life (RUL)** from sensor readings, stores predictions in PostgreSQL, serves
 them through a REST API, and sends **email alerts** automatically through n8n
 when an engine needs maintenance.
 
+## Demo
+
+Alert emails sent by the n8n workflow (shown in a Mailtrap sandbox inbox):
+
+<table>
+  <tr>
+    <td align="center"><b>CRITICAL</b> — engine 34, predicted RUL 9 cycles</td>
+    <td align="center"><b>WARNING</b> — engine 35, predicted RUL 11 cycles</td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/email_critical.png" alt="Critical maintenance alert email" width="420"></td>
+    <td><img src="docs/images/email_warning.png" alt="Warning maintenance alert email" width="420"></td>
+  </tr>
+</table>
+
 ## Pipeline
 
 ```
@@ -74,7 +89,7 @@ PMPS/
 ├── database/
 │   └── schema.sql              # sensor_readings, predictions, simulation_predictions
 ├── docs/
-│   └── images/email_alert.png  # Demo screenshot of the alert email
+│   └── images/                 # Demo screenshots of the alert emails
 ├── data/                       # C-MAPSS FD001 files
 ├── models/                     # Trained XGBoost models (v1, v2, v3)
 ├── notebooks/
@@ -227,13 +242,6 @@ IF status = WARNING  ──yes──→ Send Email
 
 The email contains the engine ID, status, predicted RUL and prediction time.
 
-### Demo
-
-![Maintenance alert email](docs/images/email_alert.png)
-
-*Alert email rendered in a Mailtrap sandbox inbox. For this demo the WARNING
-threshold was temporarily raised so that engine 3 (predicted RUL 53) would
-trigger an alert.*
 
 ### Set it up
 
