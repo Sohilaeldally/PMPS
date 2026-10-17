@@ -82,8 +82,8 @@
     },
     {
       "parameters": {
-        "fromEmail": "sohilareda511@gmail.com",
-        "toEmail": "sohilareda511@gmail.com",
+        "fromEmail": "alerts@example.com",
+        "toEmail": "maintenance-team@example.com",
         "subject": "=🚨 Maintenance Alert — Engine {{ $json.engine_id }} ({{ $json.maintenance_status }})",
         "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;\">\n\n  <div style=\"background-color: {{ $json.maintenance_status === 'CRITICAL' ? '#dc2626' : '#f59e0b' }}; padding: 20px; text-align: center;\">\n    <h2 style=\"color: #ffffff; margin: 0; font-size: 20px;\">\n      ⚠️ Maintenance Alert\n    </h2>\n  </div>\n\n  <div style=\"padding: 24px; background-color: #ffffff;\">\n    <p style=\"font-size: 15px; color: #374151; margin: 0 0 16px 0;\">\n      Engine <strong>#{{ $json.engine_id }}</strong> requires attention.\n    </p>\n\n    <table style=\"width: 100%; border-collapse: collapse; font-size: 14px;\">\n      <tr>\n        <td style=\"padding: 8px 0; color: #6b7280;\">Status</td>\n        <td style=\"padding: 8px 0; text-align: right;\">\n          <span style=\"background-color: {{ $json.maintenance_status === 'CRITICAL' ? '#fee2e2' : '#fef3c7' }}; color: {{ $json.maintenance_status === 'CRITICAL' ? '#dc2626' : '#b45309' }}; padding: 4px 10px; border-radius: 4px; font-weight: bold;\">\n            {{ $json.maintenance_status }}\n          </span>\n        </td>\n      </tr>\n      <tr>\n        <td style=\"padding: 8px 0; color: #6b7280;\">Predicted RUL</td>\n        <td style=\"padding: 8px 0; text-align: right; font-weight: bold; color: #111827;\">\n          {{ Math.round($json.predicted_rul) }} cycles\n        </td>\n      </tr>\n      <tr>\n        <td style=\"padding: 8px 0; color: #6b7280;\">Prediction Time</td>\n        <td style=\"padding: 8px 0; text-align: right; color: #111827;\">\n          {{ $json.prediction_time }}\n        </td>\n      </tr>\n    </table>\n\n    <p style=\"font-size: 13px; color: #9ca3af; margin: 20px 0 0 0;\">\n      This is an automated alert from the PredMaint monitoring system.\n    </p>\n  </div>\n\n</div>",
         "options": {
@@ -101,7 +101,7 @@
       "webhookId": "a3c66f6e-5c3d-4fa0-b42f-4cfc8e6ad4b1",
       "credentials": {
         "smtp": {
-          "id": "MbOcchT3zXjEx3hj",
+          "id": "",
           "name": "SMTP account"
         }
       }
@@ -181,7 +181,7 @@
   },
   "pinData": {},
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "c8d99a94537830e4d9cff8af62bb5776e40af135e81cd193fb2ea839c86e1e20"
-  }
+    "templateCredsSetupCompleted": true
+  },
+  "name": "PMPS"
 }
