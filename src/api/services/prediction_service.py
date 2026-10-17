@@ -11,6 +11,8 @@ from db.queries import (
 from ml.predict import predict_engine_from_db, load_model, simulate_engine_history
 from api.services.alerts import get_maintenance_status
 
+from config import DATA_DIR
+import pandas as pd
 
 def get_latest_predictions_with_status():
     rows = get_latest_predictions()
@@ -81,21 +83,25 @@ def get_simulation_results(simulation_id: str):
     return get_simulation_predictions(simulation_id)
 
 
+
 def run_simulation(engine_id: int):
     engine_data = get_engine_history(engine_id)
 
     if engine_data.empty:
         return None
 
+    rul_values = pd.read_csv(DATA_DIR / "RUL_FD001.txt", header=None)
+    actual_rul = float(rul_values.iloc[engine_id - 1, 0])
+
     simulation_id = uuid.uuid4()
     model = load_model()
-
     simulation_df = simulate_engine_history(engine_data, model=model)
 
     save_simulation_predictions(
         simulation_id=simulation_id,
         engine_id=engine_id,
         simulation_df=simulation_df,
+        actual_rul=actual_rul,
     )
 
     return {
