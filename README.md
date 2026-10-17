@@ -57,7 +57,7 @@ The API classifies every predicted RUL (in cycles):
 | ≤ 30 | `WARNING` |
 | > 30 | `NORMAL` |
 
-The logic lives in `src/api/services/alerts.py`.
+These thresholds (10 and 30 cycles) are illustrative defaults, not derived from the data or from a maintenance-cost analysis. In a real deployment they would be tuned to the lead time needed to schedule maintenance, and can be changed in `src/api/services/alerts.py`.
 
 ## Project structure
 
